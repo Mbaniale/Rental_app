@@ -4,3 +4,10 @@ ktor:
   application:
     modules:
       - com.example.ApplicationKt.module
+
+database:
+  driver: "org.postgresql.Driver"
+  url: "$DB_URL:jdbc:postgresql://localhost:5432/HouseHunter"
+  user: "$DB_USER:postgres"
+  password: "$DB_PASSWORD"
+  maxPoolSize: 10

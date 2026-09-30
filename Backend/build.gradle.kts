@@ -1,8 +1,7 @@
-
 plugins {
-    alias(libs.plugins.kotlin.jvm)
-    alias(ktorLibs.plugins.ktor)
-    alias(libs.plugins.kotlin.serialization)
+    kotlin("jvm") version "2.0.21"
+    kotlin("plugin.serialization") version "2.0.21"
+    id("io.ktor.plugin") version "3.0.3"
 }
 
 group = "com.example"
@@ -12,24 +11,35 @@ application {
     mainClass = "io.ktor.server.netty.EngineMain"
 }
 
+repositories {
+    mavenCentral()
+}
+
 kotlin {
     jvmToolchain(21)
 }
+
 dependencies {
-    implementation(ktorLibs.serialization.kotlinx.json)
-    implementation(ktorLibs.server.callLogging)
-    implementation(ktorLibs.server.config.yaml)
-    implementation(ktorLibs.server.contentNegotiation)
-    implementation(ktorLibs.server.core)
-    implementation(ktorLibs.server.netty)
-    implementation(ktorLibs.server.resources)
-    implementation(ktorLibs.server.statusPages)
-    implementation(libs.logback.classic)
-    implementation(libs.ktor.server.cors)
+    val ktorVersion = "3.0.3"
+    val exposedVersion = "0.57.0"
 
+    implementation("io.ktor:ktor-server-core:$ktorVersion")
+    implementation("io.ktor:ktor-server-netty:$ktorVersion")
+    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-server-call-logging:$ktorVersion")
+    implementation("io.ktor:ktor-server-config-yaml:$ktorVersion")
+    implementation("io.ktor:ktor-server-resources:$ktorVersion")
+    implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
+    implementation("io.ktor:ktor-server-cors:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
 
+    implementation("ch.qos.logback:logback-classic:1.5.12")
 
+    implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
+    implementation("org.postgresql:postgresql:42.7.4")
+    implementation("com.zaxxer:HikariCP:5.1.0")
 
     testImplementation(kotlin("test"))
-    testImplementation(ktorLibs.server.testHost)
+    testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
 }

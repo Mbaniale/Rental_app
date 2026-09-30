@@ -1,5 +1,7 @@
 package com.example
 
+import com.example.database.DatabaseFactory
+import com.example.repository.PropertyRepository
 import com.example.routes.propertyRoutes
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -13,12 +15,15 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
+    // Initialize the database
+    DatabaseFactory.init(this)
+
     install(ContentNegotiation) {
         json()
     }
 
     install(CORS) {
-        anyHost()          // For development only
+        anyHost()
         allowHeader(io.ktor.http.HttpHeaders.ContentType)
         allowMethod(io.ktor.http.HttpMethod.Get)
         allowMethod(io.ktor.http.HttpMethod.Post)
@@ -26,11 +31,12 @@ fun Application.module() {
         allowMethod(io.ktor.http.HttpMethod.Delete)
     }
 
+    val propertyRepository = PropertyRepository() // Create repository instance
+
     routing {
         get("/") {
             call.respondText("aLEX bUILD THIS")
         }
-
-        propertyRoutes()
+        propertyRoutes(propertyRepository) // Pass repository to routes
     }
 }

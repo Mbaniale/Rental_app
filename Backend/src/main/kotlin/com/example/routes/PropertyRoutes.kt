@@ -6,6 +6,7 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import com.example.repository.PropertyRepository
 
 val properties = mutableListOf(
     Property(
@@ -30,16 +31,22 @@ val properties = mutableListOf(
     propertyType = "Studio"
 )
 )
-fun Route.propertyRoutes(){
+fun Route.propertyRoutes(repository:PropertyRepository){
     route("/properties"){
     //get all properties
     get{
+        val properties = repository.getAllProperties()
         call.respond(properties)
     }
     //get properties by ID
     get("/{id}"){
     val id = call.parameters["id"]?.toIntOrNull()
-    val property = properties.find{it.id == id}
+        if(id == null
+            ){
+            call.respond(HttpStatusCode.BadRequest, "Invalid ID Format")
+            return@get
+        }
+    val property = repository.getPropertyById(id)
 
     if (property == null){
         call.respond(HttpStatusCode.NotFound, "Property not Found")
@@ -48,10 +55,9 @@ fun Route.propertyRoutes(){
     }
 }
 //POST - create a new property
-post{
-    val property = call.receive<Property>()
-    val newId = (properties.maxOfOrNull{it.id} ?:0) +1
-    val newProperty =property.copy(id = newId)
-    properties.add(newProperty)
-    call.respond(HttpStatusCode.Created, newProperty)
+        post {
+            val property = call.receive<Property>()
+            // The ID from the request body is ignored; the database will generate it.
+            val newProperty = repository.createProperty(property)
+            call.respond(HttpStatusCode.Created, newProperty)
 }}}
