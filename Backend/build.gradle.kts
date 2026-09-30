@@ -25,6 +25,10 @@ dependencies {
     implementation(ktorLibs.server.resources)
     implementation(ktorLibs.server.statusPages)
     implementation(libs.logback.classic)
+    implementation(libs.ktor.server.cors)
+
+
+
 
     testImplementation(kotlin("test"))
     testImplementation(ktorLibs.server.testHost)

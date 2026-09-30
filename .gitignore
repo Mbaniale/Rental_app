@@ -1,33 +1,13 @@
-# Android
-*.iml
 .gradle/
-/local.properties
-/.idea/
-.DS_Store
-/build/
-/captures/
-.externalNativeBuild/
-.cxx/
-*.apk
-*.ap_
-*.aab
+build/
+!gradle/wrapper/gradle-wrapper.jar
+.idea/
+*.iml
 local.properties
-
-# Kotlin / Gradle
-.kotlin/
-**/build/
-!**/src/**/build/
-
-# Backend (Ktor)
-backend/.gradle/
-backend/build/
-backend/out/
-backend/.idea/
-backend/*.iml
-
-# General
-*.log
-*.tmp
-*.swp
+.env
+*.jks
+*.keystore
+google-services.json
+secrets.properties
 .DS_Store
 Thumbs.db
