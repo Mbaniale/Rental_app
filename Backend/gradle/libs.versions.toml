@@ -2,10 +2,14 @@
 kotlin = "2.2.10"
 logback = "1.5.37"
 ktor = "3.0.0"
+room3CommonJvm = "3.0.3"
+playServicesCloudMessaging = "17.4.0"
 
 [libraries]
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 ktor-server-cors = { module = "io.ktor:ktor-server-cors-jvm", version.ref = "ktor" }
+room3-common-jvm = { group = "androidx.room3", name = "room3-common-jvm", version.ref = "room3CommonJvm" }
+play-services-cloud-messaging = { group = "com.google.android.gms", name = "play-services-cloud-messaging", version.ref = "playServicesCloudMessaging" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

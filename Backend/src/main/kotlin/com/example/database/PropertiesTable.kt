@@ -1,10 +1,11 @@
-#!/usr/bin/env kotlin
+
 
 package com.example.database
 
 import org.jetbrains.exposed.sql.Table
 
 object PropertiesTable : Table("properties") {
+    val ownerId = integer("owner_id").references(UsersTable.id).nullable()
     val id = integer("id").autoIncrement()
     val title = varchar("title", 255)
     val description = text("description")

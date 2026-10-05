@@ -11,3 +11,9 @@ database:
   user: "$DB_USER:postgres"
   password: "$DB_PASSWORD"
   maxPoolSize: 10
+
+jwt:
+    secret: "$JWT_SECRET:change-this-to-a-long-random-string"
+    issuer: "alex-build"
+    audience: "alex-build-users"
+    realm: "Property app"

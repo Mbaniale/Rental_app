@@ -26,7 +26,7 @@ object DatabaseFactory {
         Database.connect(dataSource)
 
         transaction {
-            SchemaUtils.create(PropertiesTable)
+            SchemaUtils.create(PropertiesTable, UsersTable)
 
             if (PropertiesTable.selectAll().count() == 0L) {
                 val samples = listOf(

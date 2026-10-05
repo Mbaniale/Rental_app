@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>API tester</title>
+    <style>
+        :root { --bg:#f6f7f9; --card:#fff; --ink:#1c2430; --mute:#5d6877; --line:#d9dee5; --accent:#1f5fbf; --ok:#17794a; --bad:#b3261e; }
+        * { box-sizing: border-box; }
+        body { margin:0; font:15px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--ink); }
+        header { padding:16px 20px; background:var(--ink); color:#fff; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center; }
+        header h1 { font-size:18px; margin:0; }
+        #who { font-size:14px; opacity:.9; }
+        main { max-width:1100px; margin:20px auto; padding:0 16px; display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); }
+        section { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:16px; }
+        h2 { font-size:16px; margin:0 0 10px; }
+        label { display:block; font-size:13px; color:var(--mute); margin:8px 0 2px; }
+        input, select { width:100%; padding:8px; border:1px solid var(--line); border-radius:6px; font:inherit; }
+        .row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+        button { margin:12px 8px 0 0; padding:8px 14px; border:0; border-radius:6px; background:var(--accent); color:#fff; font:inherit; cursor:pointer; }
+        button.alt { background:#fff; color:var(--accent); border:1px solid var(--accent); }
+        button:focus-visible, input:focus-visible, select:focus-visible { outline:3px solid #8bb4f0; outline-offset:1px; }
+        #log { grid-column:1/-1; }
+        pre { background:#0f1720; color:#d7e2ee; padding:12px; border-radius:6px; overflow:auto; max-height:320px; margin:8px 0 0; white-space:pre-wrap; word-break:break-word; }
+        .status { font-weight:600; }
+        .status.ok { color:var(--ok); } .status.bad { color:var(--bad); }
+        #cards { display:grid; gap:10px; margin-top:10px; }
+        .prop { border:1px solid var(--line); border-radius:6px; padding:10px; }
+        .prop b { display:block; }
+        .prop span { color:var(--mute); font-size:13px; }
+        .tag { display:inline-block; font-size:12px; padding:1px 8px; border-radius:10px; background:#e6f2ec; color:var(--ok); }
+        .tag.off { background:#f8e6e4; color:var(--bad); }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Property API tester</h1>
+    <div id="who">Not logged in</div>
+</header>
+
+<main>
+    <section>
+        <h2>Register</h2>
+        <label for="r-email">Email</label><input id="r-email" type="email" placeholder="you@example.com">
+        <label for="r-phone">Phone (optional)</label><input id="r-phone" placeholder="0712345678">
+        <div class="row">
+            <div><label for="r-pass">Password (8–72 characters)</label><input id="r-pass" type="password"></div>
+            <div><label for="r-role">Role</label>
+                <select id="r-role"><option>TENANT</option><option>LANDLORD</option></select></div>
+        </div>
+        <button id="btn-register">Register</button>
+    </section>
+
+    <section>
+        <h2>Log in</h2>
+        <label for="l-id">Email or phone</label><input id="l-id">
+        <label for="l-pass">Password</label><input id="l-pass" type="password">
+        <button id="btn-login">Log in</button>
+        <button id="btn-logout" class="alt">Log out</button>
+    </section>
+
+    <section>
+        <h2>Properties</h2>
+        <div class="row">
+            <div><label for="p-id">Property id (optional)</label><input id="p-id" type="number" min="1"></div>
+            <div><label for="p-query">Filters (query string)</label><input id="p-query" placeholder="e.g. location=Karen"></div>
+        </div>
+        <button id="btn-list">Load properties</button>
+        <div id="cards"></div>
+    </section>
+
+    <section>
+        <h2>Add property (landlord or admin)</h2>
+        <label for="a-title">Title</label><input id="a-title" value="Test flat in Rongai">
+        <label for="a-desc">Description</label><input id="a-desc" value="Quiet, near the main road">
+        <div class="row">
+            <div><label for="a-price">Price</label><input id="a-price" type="number" value="30000"></div>
+            <div><label for="a-loc">Location</label><input id="a-loc" value="Rongai, Kajiado"></div>
+            <div><label for="a-bed">Bedrooms</label><input id="a-bed" type="number" value="1"></div>
+            <div><label for="a-bath">Bathrooms</label><input id="a-bath" type="number" value="1"></div>
+        </div>
+        <label for="a-type">Type</label><input id="a-type" value="Apartment">
+        <button id="btn-add">Add property</button>
+        <button id="btn-add-anon" class="alt">Add without token</button>
+    </section>
+
+    <section id="log">
+        <h2>Last response</h2>
+        <div><span id="st" class="status">No request yet</span> <span id="url"></span></div>
+        <pre id="out">Responses appear here.</pre>
+    </section>
+</main>
+
+<script>
+    const $ = id => document.getElementById(id);
+    let token = sessionStorage.getItem('token') || '';
+    let user = JSON.parse(sessionStorage.getItem('user') || 'null');
+
+    function refreshWho() {
+      $('who').textContent = user ? `Logged in: ${user.email || user.phone} (${user.role})` : 'Not logged in';
+    }
+
+    async function call(method, path, body, useToken = true) {
+      const headers = {};
+      if (body !== undefined) headers['Content-Type'] = 'application/json';
+      if (useToken && token) headers['Authorization'] = 'Bearer ' + token;
+      let res, text;
+      try {
+        res = await fetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+        text = await res.text();
+      } catch (e) {
+        show(0, method + ' ' + path, 'Request failed: ' + e.message + '\nIs the server running?');
+        return null;
+      }
+      let data = text;
+      try { data = JSON.parse(text); } catch (_) {}
+      show(res.status, method + ' ' + path, typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+      return { status: res.status, data };
+    }
+
+    function show(status, label, text) {
+      const ok = status >= 200 && status < 300;
+      $('st').textContent = status ? status : 'No response';
+      $('st').className = 'status ' + (ok ? 'ok' : 'bad');
+      $('url').textContent = label;
+      $('out').textContent = text || '(empty body)';
+    }
+
+    function renderProps(list) {
+      const box = $('cards'); box.innerHTML = '';
+      (Array.isArray(list) ? list : [list]).forEach(p => {
+        const d = document.createElement('div'); d.className = 'prop';
+        const t = document.createElement('b'); t.textContent = `#${p.id} ${p.title}`;
+        const s = document.createElement('span');
+        s.textContent = `${p.location} · ${p.bedrooms} bed · ${p.bathrooms} bath · ${p.propertyType} · KES ${Number(p.price).toLocaleString()}`;
+        const tag = document.createElement('div');
+        const g = document.createElement('span'); g.className = 'tag' + (p.isAvailable ? '' : ' off');
+        g.textContent = p.isAvailable ? 'Available' : 'Not available'; tag.appendChild(g);
+        const desc = document.createElement('div'); desc.textContent = p.description;
+        d.append(t, s, desc, tag); box.appendChild(d);
+      });
+    }
+
+    $('btn-register').onclick = () => {
+      const body = { password: $('r-pass').value, role: $('r-role').value };
+      if ($('r-email').value.trim()) body.email = $('r-email').value.trim();
+      if ($('r-phone').value.trim()) body.phone = $('r-phone').value.trim();
+      call('POST', '/auth/register', body, false);
+    };
+
+    $('btn-login').onclick = async () => {
+      const r = await call('POST', '/auth/login', { identifier: $('l-id').value, password: $('l-pass').value }, false);
+      if (r && r.status === 200 && r.data.token) {
+        token = r.data.token; user = r.data.user;
+        sessionStorage.setItem('token', token); sessionStorage.setItem('user', JSON.stringify(user));
+        refreshWho();
+      }
+    };
+
+    $('btn-logout').onclick = () => {
+      token = ''; user = null; sessionStorage.clear(); refreshWho();
+      show(200, 'local', 'Token cleared from this tab.');
+    };
+
+    $('btn-list').onclick = async () => {
+      const id = $('p-id').value.trim(), q = $('p-query').value.trim().replace(/^\?/, '');
+      const path = id ? '/properties/' + encodeURIComponent(id) : '/properties' + (q ? '?' + q : '');
+      const r = await call('GET', path, undefined, false);
+      if (r && r.status === 200 && typeof r.data === 'object') renderProps(r.data); else $('cards').innerHTML = '';
+    };
+
+    function propertyBody() {
+      return { id: 0, title: $('a-title').value, description: $('a-desc').value, price: Number($('a-price').value),
+        location: $('a-loc').value, bedrooms: Number($('a-bed').value), bathrooms: Number($('a-bath').value),
+        propertyType: $('a-type').value, isAvailable: true };
+    }
+    $('btn-add').onclick = () => call('POST', '/properties', propertyBody(), true);
+    $('btn-add-anon').onclick = () => call('POST', '/properties', propertyBody(), false);
+
+    refreshWho();
+</script>
+</body>
+</html>

@@ -12,5 +12,6 @@ data class Property(
     val bedrooms: Int,
     val bathrooms: Int,
     val propertyType: String,   // e.g. "Apartment", "House", "Studio"
-    val isAvailable: Boolean = true
+    val isAvailable: Boolean = true,
+    val ownerId: Int? = null
 )
